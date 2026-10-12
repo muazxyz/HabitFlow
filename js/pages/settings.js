@@ -2,7 +2,8 @@
 window.Pages=window.Pages||{};
 Pages.settings={render(el,u){
   const U=u.username,words=t=>t.trim()?t.trim().split(/\s+/).length:0;let bio=Social.profile(U).bio||'',msg='',mc='err';
-  const setS=o=>{store.set('hf_settings',{...store.get('hf_settings',{theme:'midnight',font:'inter'}),...o});App.applyTheme()};
+  const setS=o=>{store.set('hf_settings',{...store.get('hf_settings',{theme:'midnight',font:'inter'}),...o});App.applyTheme();Sync.settings()};
+  const shrink=f=>new Promise(res=>{const im=new Image(),url=URL.createObjectURL(f);im.onload=()=>{const c=document.createElement('canvas'),k=Math.min(im.width,im.height);c.width=c.height=256;c.getContext('2d').drawImage(im,(im.width-k)/2,(im.height-k)/2,k,k,0,0,256,256);URL.revokeObjectURL(url);res(c.toDataURL('image/jpeg',.85))};im.src=url});   // square 256px copy keeps the community lists light
   const draw=()=>{const s=store.get('hf_settings',{theme:'midnight',font:'inter'}),un=store.get('hf_unlocked',{}),C=store.get('hf_customs',[]),P=Social.profile(U);
     App.repaint(el,`<div class="col" style="max-width:720px"><div class="card"><h3>Profile</h3>
       <div class="pfrow"><div class="pfp" id="pfp">${P.avatar?'':esc(U[0].toUpperCase())}</div><div><button class="sm" data-a="up">Upload photo</button> ${P.avatar?'<button class="sm bad" data-a="rm">Remove</button>':''}<div class="mu" style="margin-top:6px">JPG, PNG or WebP, under 200 KB</div></div><input type="file" id="pf" accept="image/png,image/jpeg,image/webp" hidden></div>
@@ -23,7 +24,7 @@ Pages.settings={render(el,u){
     m.querySelector('#s').onclick=()=>{const n=m.querySelector('#cn').value.trim();if(!n)return m.querySelector('#ce').textContent='Give your theme a name';const id='x'+Date.now();
       store.set('hf_customs',[...store.get('hf_customs',[]),{id,name:n,...V}]);setS({theme:'c:'+id});c();draw()}});
   el.onclick=e=>{const dl=e.target.closest('[data-del]'),t=e.target.closest('[data-t]'),f=e.target.closest('[data-f]'),b=e.target.closest('[data-a]');msg='';mc='err';
-    if(dl){store.set('hf_customs',store.get('hf_customs',[]).filter(x=>x.id!=dl.dataset.del));if(store.get('hf_settings',{}).theme=='c:'+dl.dataset.del)setS({theme:'midnight'});return draw()}
+    if(dl){store.set('hf_customs',store.get('hf_customs',[]).filter(x=>x.id!=dl.dataset.del));Sync.settings();if(store.get('hf_settings',{}).theme=='c:'+dl.dataset.del)setS({theme:'midnight'});return draw()}
     if(t){const k=t.dataset.t;if(k=='rose'&&!store.get('hf_unlocked',{}).rose)return keyAsk();setS({theme:k});return draw()}
     if(f){setS({font:f.dataset.f});return draw()}if(!b)return;const a=b.dataset.a,P=Social.profile(U);
     if(a=='cust')return custom();if(a=='up')return $('#pf').click();
@@ -31,5 +32,5 @@ Pages.settings={render(el,u){
     if(a=='save'){if(words(bio)>50){msg='Keep your bio within 50 words.';return draw()}Social.setProfile(U,{...P,bio:bio.trim()});msg='Profile saved.';mc='err ok';draw()}};
   el.oninput=e=>{if(e.target.id=='bio'){bio=e.target.value;const n=words(bio),w=$('#wc');w.textContent=n+'/50 words';w.style.color=n>50?'var(--dg)':''}};
   el.onchange=e=>{if(e.target.id!='pf')return;const f=e.target.files[0];if(!f)return;if(f.size>204800){msg='Photo must be under 200 KB.';return draw()}
-    const r=new FileReader();r.onload=()=>{Social.setProfile(U,{...Social.profile(U),avatar:r.result});App.refreshAvatar();draw()};r.readAsDataURL(f)};
+    shrink(f).then(d=>{Social.setProfile(U,{...Social.profile(U),avatar:d});App.refreshAvatar();draw()})};
   draw()}};

@@ -52,7 +52,7 @@ Pages.home={render(el,u){
     if(a=='pick')return UI.datePick(D.joined,T,view,k=>{view=k;draw()});
     if(a=='cv'){cv=b.dataset.v;ypos=null;return draw()}if(a=='ac'){act=b.dataset.v;return draw()}
     if(a=='cn'){const n=+b.dataset.v,nd=cv=='year'?new Date(cm.getFullYear()+n,cm.getMonth(),1):new Date(cm.getFullYear(),cm.getMonth()+n,1);if(nd<new Date(CONFIG.START_YEAR,cv=='year'?0:1,1))return;cm=nd;ypos=null;return draw()}
-    if(a=='rs'){const v=$('#rm').value.trim();store.set(rk,v?{text:v,saved:T,shown:false}:null);return draw()}
+    if(a=='rs'){const v=$('#rm').value.trim();const nv=v?{text:v,saved:T,shown:false}:null;store.set(rk,nv);Sync.push('remark',nv);return draw()}
     if(r&&!fired&&!blk&&view<=T){const t=D.log[view]=D.log[view]||[],i=t.indexOf(id);i<0?t.push(id):t.splice(i,1);save()}fired=false};
   el.onpointerdown=e=>{const r=e.target.closest('.habit[data-id]');if(!r||e.target.closest('button'))return;fired=false;down=true;sx=e.clientX;sy=e.clientY;t1=setTimeout(()=>{bar=true;r.classList.add('lp')},180);t2=setTimeout(()=>{bar=false;down=false;fired=true;r.classList.remove('lp');del(r.dataset.id)},650)};
   el.onpointermove=e=>{if(down&&Math.hypot(e.clientX-sx,e.clientY-sy)>8)stop()};el.onpointerup=el.onpointercancel=stop;
@@ -61,5 +61,5 @@ Pages.home={render(el,u){
   el.ondrop=e=>{const r=e.target.closest('.habit[data-id]');if(!dr||!r||r.dataset.id==dr)return;const ia=D.habits.findIndex(h=>h.id==dr),ib=D.habits.findIndex(h=>h.id==r.dataset.id),[x]=D.habits.splice(ia,1);D.habits.splice(ib,0,x);dr=null;save()};
   el.ondragend=()=>{dr=null;el.querySelectorAll('.drag').forEach(x=>x.classList.remove('drag'))};
   /* remark saved yesterday or earlier pops up once */
-  const R0=store.get(rk,null);if(R0&&!R0.shown&&R0.saved<T){R0.shown=true;store.set(rk,R0);UI.modal(`<h3>💌 Your remark</h3><p style="margin:12px 0 18px;white-space:pre-wrap">${esc(R0.text)}</p><button class="btn" id="o">Got it</button>`,(m,c)=>m.querySelector('#o').onclick=c)}
+  const R0=store.get(rk,null);if(R0&&!R0.shown&&R0.saved<T){R0.shown=true;store.set(rk,R0);Sync.push('remark',R0);UI.modal(`<h3>💌 Your remark</h3><p style="margin:12px 0 18px;white-space:pre-wrap">${esc(R0.text)}</p><button class="btn" id="o">Got it</button>`,(m,c)=>m.querySelector('#o').onclick=c)}
   draw()}};
