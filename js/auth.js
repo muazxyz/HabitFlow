@@ -12,7 +12,8 @@ const Auth={
   async login({username,password}){
     if(sb){
       const{data:em}=await sb.rpc('get_email_by_username',{uname:username});if(!em)throw Error('Wrong username or password');
-      const{data,error}=await sb.auth.signInWithPassword({email:em,password});if(error)throw Error('Wrong username or password');
+      const{data,error}=await sb.auth.signInWithPassword({email:em,password});
+      if(error){console.warn('Supabase sign-in error:',error.message);throw Error(/confirm/i.test(error.message)?'This account is not confirmed yet. Ask the admin to confirm it.':/invalid/i.test(error.message)?'Wrong username or password':error.message)}   // real reason shown, except for bad credentials
       const p=await this._profile(data.user.id);
       if(!p||p.status!='approved'){await sb.auth.signOut();throw Error(DENY[p&&p.status]||'Access denied.')}
       return this._session(p);

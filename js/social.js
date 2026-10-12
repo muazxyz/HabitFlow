@@ -3,7 +3,7 @@
    SUPABASE: replace the bodies with queries on supabase/schema2.sql (programs, program_tasks, program_members, task_progress, friendships). ===== */
 const Social={
   /* profile (bio <=50 words, avatar <200KB). SUPABASE: profiles.bio / profiles.avatar_url via set_my_profile() (schema3.sql) */
-  profile(u){return store.get('hf_profile_'+u,{bio:'',avatar:''})},setProfile(u,v){store.set('hf_profile_'+u,v)},
+  profile(u){return store.get('hf_profile_'+u,{bio:'',avatar:''})},setProfile(u,v){store.set('hf_profile_'+u,v);if(sb)sb.rpc('set_my_profile',{p_bio:v.bio||'',p_avatar:v.avatar||''}).then(r=>r.error&&console.warn(r.error.message))},
   /* notification groundwork: events are recorded now, the bell UI comes later. SUPABASE: insert into public.notifications */
   notify(to,type,data){const N=store.get('hf_notifs',[]);N.push({id:'n'+Date.now()+N.length,to,type,data,read:false,at:Date.now()});store.set('hf_notifs',N)},
   progs(){return store.get('hf_programs',[])},                                   // {id,name,desc,creator,tasks:[{id,t,url}],created}

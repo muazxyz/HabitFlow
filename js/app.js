@@ -9,7 +9,8 @@ const App={
     $('#auth').hidden=true;$('#app').hidden=false;$('#pname').textContent=u.username;this.refreshAvatar();$('.logo').innerHTML=LOGO+'<span>HabitFlow</span>';$('#gear').innerHTML=IC.gear;$('#gear').onclick=()=>location.hash='settings';
     $('#nav').innerHTML=CONFIG.NAV.filter(n=>n[0]!='admin'||u.role=='admin').map(([id,l,i])=>`<button data-p="${id}"><b>${i}</b><span>${l}</span></button>`).join('');
     $('#nav').onclick=e=>{const b=e.target.closest('button');if(b)location.hash=b.dataset.p};
-    this.route()},
+    const go=()=>{this.applyTheme();this.refreshAvatar();this.route()};
+    if(sb&&!Sync.ok){$('#view').innerHTML='<div class="card mu">Loading your data…</div>';Sync.pull(u).finally(go)}else go()},
   /* RULE FOR ALL PAGES: re-draw with App.repaint(el, html) - never el.innerHTML= inside a redraw.
      First paint after navigating plays the entrance animation; later repaints are silent and keep scroll position. */
   repaint(el,html){const v=$('#view');if(v.dataset.fresh)delete v.dataset.fresh;else v.classList.add('still');const y=v.scrollTop;el.innerHTML=html;v.scrollTop=y},
@@ -22,5 +23,5 @@ const App={
 };
 App.applyTheme();window.onhashchange=()=>App.route();
 $('#pbtn').onclick=e=>{e.stopPropagation();$('#pmenu').hidden=!$('#pmenu').hidden};document.onclick=()=>$('#pmenu').hidden=true;
-$('#logout').onclick=async()=>{await Auth.logout();$('#pmenu').hidden=true;location.hash='';AuthUI.show()};
+$('#logout').onclick=async()=>{await Sync.flush();await Auth.logout();Sync.clear();App.applyTheme();$('#pmenu').hidden=true;location.hash='';AuthUI.show()};
 App.start();
