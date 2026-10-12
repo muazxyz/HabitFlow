@@ -1,4 +1,3 @@
-
 /* ===== THEMES: edit colours here. Add a theme = new [data-theme] block + entry in js/config.js ===== */
 @font-face{font-family:"Angelina Beauty";src:url("../fonts/AngelinaBeauty.ttf");} /* drop your font file in /fonts */
 :root,[data-theme=midnight]{--bg:#070b16;--panel:#0d1322;--panel2:#121a2e;--bd:#1c2640;--tx:#e8ecf8;--mu:#7f8aa8;--a1:#6d6bf5;--a2:#38bdf8;--soft:#2a2f6b;--dg:#ff4d5e}
