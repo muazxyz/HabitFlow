@@ -14,6 +14,6 @@ const Sync={ok:false,dirty:{},tid:null,
   async flush(){clearTimeout(this.tid);const d=this.dirty,u=Auth.current();this.dirty={};if(!sb||!u||!Object.keys(d).length)return;
     const{error}=await sb.from('user_data').upsert({user_id:u.id,...d,updated_at:new Date().toISOString()});
     if(error){console.warn('Sync failed:',error.message);this.dirty={...d,...this.dirty}}},   // keep it for the next try
-  clear(){if(!sb)return;Object.keys(localStorage).filter(k=>/^hf_(hab|remark|profile)_|^hf_(settings|customs|unlocked)$/.test(k)).forEach(k=>localStorage.removeItem(k));this.ok=false}   // logout: leave nothing of this account behind
+  clear(){if(!sb)return;Object.keys(localStorage).filter(k=>/^hf_(hab|remark|profile)_|^hf_(settings|customs|unlocked|programs|members|friends|fh|community)$/.test(k)).forEach(k=>localStorage.removeItem(k));this.ok=false}   // logout: leave nothing of this account behind
 };
 document.addEventListener('visibilitychange',()=>{if(document.hidden)Sync.flush()});

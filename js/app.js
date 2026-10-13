@@ -19,8 +19,11 @@ const App={
     $('#gear').classList.toggle('on',id=='settings');
     document.querySelectorAll('#nav button').forEach(b=>b.classList.toggle('on',b.dataset.p==id));
     const v=$('#view');['onclick','onpointerdown','onpointermove','onpointerup','onpointercancel','ondragstart','ondragover','ondrop','ondragend','oninput','onchange'].forEach(k=>v[k]=null);v.classList.remove('still');v.dataset.fresh=1;v.style.animation='none';v.offsetHeight;v.style.animation='';
-    (Pages[id]||Pages.home).render(v,u)}
+    Social.hook=null;(Pages[id]||Pages.home).render(v,u)}
 };
+/* live-ish updates: while Skill Learning or Social is open, re-read the server every 20s and redraw only if something changed */
+const poll=()=>{const id=location.hash.slice(1)||'home';if(sb&&Auth.current()&&!document.hidden&&Social.hook&&['skills','friends'].includes(id))Social.refresh().then(ch=>ch&&Social.hook&&Social.hook())};
+setInterval(poll,20000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)poll()});
 App.applyTheme();window.onhashchange=()=>App.route();
 $('#pbtn').onclick=e=>{e.stopPropagation();$('#pmenu').hidden=!$('#pmenu').hidden};document.onclick=()=>$('#pmenu').hidden=true;
 $('#logout').onclick=async()=>{await Sync.flush();await Auth.logout();Sync.clear();App.applyTheme();$('#pmenu').hidden=true;location.hash='';AuthUI.show()};
