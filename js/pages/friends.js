@@ -2,7 +2,7 @@
 window.Pages=window.Pages||{};
 Pages.friends={render(el,u){
   const U=u.username,av=n=>`<span class="av">${esc(n[0].toUpperCase())}</span>`;let msg='',mc='err';
-  const stat=n=>{const D=Habits.load(n),T=Habits.today(),vis=Habits.sched(D,T).filter(h=>h.vis),dn=D.log[T]||[];return{n,vis,dn,done:vis.filter(h=>dn.includes(h.id)).length,S:Habits.streak(D)}};
+  const stat=n=>{const D=(n==U||!sb)?Habits.load(n):(Social.fhOf(n)||{habits:[],log:{},joined:Habits.today()}),T=Habits.today(),vis=Habits.sched(D,T).filter(h=>h.vis),dn=D.log[T]||[];return{n,vis,dn,done:vis.filter(h=>dn.includes(h.id)).length,S:Habits.streak(D)}};
   const draw=()=>{const F=Social.friends(U).map(stat),inc=Social.incoming(U),out=Social.outgoing(U),all=[stat(U),...F].sort((a,b)=>b.S.cur-a.S.cur);
     App.repaint(el,`<div class="grid"><div class="col"><div class="card"><h3>Add a friend</h3><div style="display:flex;gap:10px"><input id="fu" placeholder="Username" style="margin:0"><button class="btn add" data-a="req">Send request</button></div><div class="${mc}" id="fm" style="margin-top:8px">${msg}</div></div>
      ${inc.length||out.length?`<div class="card"><h3>Requests</h3>${inc.map(n=>`<div class="urow">${av(n)}<div class="n">${esc(n)} <span class="mu">wants to be friends</span></div><button class="sm ok" data-a="acc" data-v="${esc(n)}">Accept</button><button class="sm bad" data-a="dec" data-v="${esc(n)}">Decline</button></div>`).join('')}${out.map(n=>`<div class="urow">${av(n)}<div class="n">${esc(n)} <span class="mu">request sent</span></div><span class="badge pending">pending</span></div>`).join('')}</div>`:''}
@@ -15,4 +15,5 @@ Pages.friends={render(el,u){
   el.onclick=e=>{const b=e.target.closest('[data-a]');if(!b)return;const a=b.dataset.a,v=b.dataset.v;msg='';mc='err';
     if(a=='req')return send();if(a=='acc'||a=='dec'){Social.respond(v,U,a=='acc');return draw()}if(a=='view')view(v)};
   el.onkeydown=e=>{if(e.key=='Enter'&&e.target.id=='fu')send()};
-  draw()}};
+  Social.hook=draw;Social.wantFH=true;
+  if(sb){el.innerHTML='<div class="card mu">Loading…</div>';Social.refresh().then(()=>draw())}else draw()}};

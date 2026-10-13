@@ -38,7 +38,7 @@ Pages.skills={render(el,u){
       if(!Social.mem(openId)[U]){if(Social.progs().find(x=>x.id==openId).creator!=U){$('#dm',m).textContent='Join this program to track your tasks.';return}Social.join(openId,U)}
       Social.toggle(openId,U,r.dataset.t);refresh()}});
   /* creator controls / new program */
-  const form=p=>{let T=p?p.tasks.map(t=>({...t})):[{id:'t'+Date.now(),t:'',url:''}];
+  const form=p=>{let T=p?p.tasks.map(t=>({...t})):[{id:uuid(),t:'',url:''}];
     UI.modal('',m=>{m.classList.add('xl');const q=s=>m.querySelector(s),rows=()=>q('#tl').innerHTML=T.map((t,i)=>`<div class="trow"><span class="tn">${i+1}</span><input data-k="t" data-i="${i}" placeholder="Task title" value="${esc(t.t)}"><input data-k="url" data-i="${i}" placeholder="https://link" value="${esc(t.url)}"><button class="ib" data-x="${i}" title="Remove">✕</button></div>`).join('');
       m.innerHTML=`<h3>${p?'Creator controls':'New skill program'}</h3><div class="mu" style="margin-bottom:12px">${p?`Edit the details and tasks of “${esc(p.name)}”.`:'Name it, describe it, and add the tasks learners will follow.'}</div>
        <input id="pn" placeholder="Program name" value="${esc(p?p.name:'')}"><textarea id="pd" placeholder="Description" style="min-height:64px">${esc(p?p.desc||'':'')}</textarea>
@@ -47,11 +47,11 @@ Pages.skills={render(el,u){
        <div class="err" id="pe"></div><div class="mrow"><button class="btn ghost" id="c">Cancel</button><button class="btn" id="s">Save</button></div>`;
       rows();m.oninput=e=>{const i=e.target.dataset.i;if(i!=null)T[i][e.target.dataset.k]=e.target.value};
       m.onclick=e=>{const x=e.target.closest('[data-x]');if(x){T.splice(+x.dataset.x,1);rows()}};
-      q('#c').onclick=()=>m.parentNode.click();q('#ta').onclick=()=>{T.push({id:'t'+Date.now()+T.length,t:'',url:''});rows()};q('#tg').onclick=()=>q('#tbw').hidden=!q('#tbw').hidden;
-      q('#tp').onclick=()=>{T=T.filter(x=>x.t||x.url);q('#tb').value.split('\n').map(s=>s.trim()).filter(Boolean).forEach(l=>T.push({id:'t'+Date.now()+'_'+T.length,t:'Task '+(T.length+1),url:l}));q('#tb').value='';q('#tbw').hidden=true;rows()};
+      q('#c').onclick=()=>m.parentNode.click();q('#ta').onclick=()=>{T.push({id:uuid(),t:'',url:''});rows()};q('#tg').onclick=()=>q('#tbw').hidden=!q('#tbw').hidden;
+      q('#tp').onclick=()=>{T=T.filter(x=>x.t||x.url);q('#tb').value.split('\n').map(s=>s.trim()).filter(Boolean).forEach(l=>T.push({id:uuid(),t:'Task '+(T.length+1),url:l}));q('#tb').value='';q('#tbw').hidden=true;rows()};
       q('#s').onclick=()=>{const err=s=>q('#pe').textContent=s,n=q('#pn').value.trim(),R=T.filter(x=>x.t.trim()||x.url.trim());
         if(!n)return err('Give the program a name');if(!R.length)return err('Add at least one task');if(R.some(x=>!x.url.trim()))return err('Every task needs a link');
-        Social.saveProg({id:p?p.id:'p'+Date.now(),name:n,desc:q('#pd').value.trim(),creator:p?p.creator:U,created:p?p.created:Date.now(),
+        Social.saveProg({id:p?p.id:uuid(),name:n,desc:q('#pd').value.trim(),creator:p?p.creator:U,created:p?p.created:Date.now(),
           tasks:R.map(x=>({id:x.id,t:x.t.trim()||x.url.trim(),url:/^https?:\/\//i.test(x.url.trim())?x.url.trim():'https://'+x.url.trim()}))});
         m.parentNode.click();refresh()}})};
   const delFlow=p=>UI.modal(`<h3>Delete “${esc(p.name)}”?</h3><p class="mu" style="margin-bottom:10px">This removes the program and everyone's progress. Type <b>DELETE</b> to confirm.</p><input id="dc" placeholder="DELETE" autocomplete="off"><div class="mrow" style="margin-top:8px"><button class="btn ghost" id="c">Cancel</button><button class="btn red" id="o" disabled>Delete</button></div>`,
@@ -67,4 +67,5 @@ Pages.skills={render(el,u){
     if(a=='fo'){filter=b.dataset.v;fopen=false;return draw()}
     if(menuId||fopen){menuId=null;fopen=false;draw()}
     if(b)act(a,b.dataset.id)};
-  draw()}};
+  Social.hook=refresh;Social.wantFH=false;
+  if(sb){el.innerHTML='<div class="card mu">Loading…</div>';Social.refresh().then(()=>refresh())}else draw()}};
