@@ -7,7 +7,7 @@ const App={
   refreshAvatar(){const u=Auth.current(),p=Social.profile(u.username),a=$('#pav');a.style.backgroundImage=p.avatar?`url(${p.avatar})`:'';a.style.backgroundSize='cover';a.textContent=p.avatar?'':u.username[0].toUpperCase()},
   start(){const u=Auth.current();if(!u)return AuthUI.show();
     $('#auth').hidden=true;$('#app').hidden=false;$('#pname').textContent=u.username;this.refreshAvatar();$('.logo').innerHTML=LOGO+'<span>HabitFlow</span>';$('#gear').innerHTML=IC.gear;$('#gear').onclick=()=>location.hash='settings';
-    $('#nav').innerHTML=CONFIG.NAV.filter(n=>n[0]!='admin'||u.role=='admin').map(([id,l,i])=>`<button data-p="${id}"><b>${i}</b><span>${l}</span></button>`).join('');
+    $('#nav').innerHTML=CONFIG.NAV.filter(n=>n[0]!='admin'||u.role=='admin').map(([id,l,i])=>`<button data-p="${id}"><b>${i}</b><span>${{friends:'Social'}[id]||l}</span></button>`).join('');
     $('#nav').onclick=e=>{const b=e.target.closest('button');if(b)location.hash=b.dataset.p};
     const go=()=>{this.applyTheme();this.refreshAvatar();this.route()};
     if(sb&&!Sync.ok){$('#view').innerHTML='<div class="card mu">Loading your data…</div>';Sync.pull(u).finally(go)}else go()},

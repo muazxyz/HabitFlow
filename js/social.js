@@ -6,22 +6,31 @@ const Social={
   hook:null,wantFH:false,N:{},I:{},                       // N: id->username, I: username->id
   me(){return Auth.current()},
   w(p){return Promise.resolve(p).then(r=>{if(r&&r.error)throw r.error}).catch(e=>{console.warn('Save failed:',e.message||e);return this.refresh().then(()=>this.hook&&this.hook())})},   // on failure, re-read the server so the screen never lies
+  /* ---- community ---- */
+  community(){if(sb)return store.get('hf_community',[]).map(u=>({username:u.username,bio:u.bio||'',avatar:u.avatar_url||'',since:Date.parse(u.created_at)||0}));
+    return Auth._users().filter(u=>u.status=='approved').map(u=>({username:u.username,bio:this.profile(u.username).bio,avatar:this.profile(u.username).avatar,since:u.created||0}))},
+  prof(u){const c=this.community().find(x=>x.username==u)||{since:0},me=this.me();if(me&&u==me.username){const p=this.profile(u);return{bio:p.bio,avatar:p.avatar,since:c.since}}return{bio:'',avatar:'',...c}},
+  stat(u){if(!sb||u==this.me().username){const D=Habits.load(u),S=Habits.streak(D);return{streak:S.cur,best:S.best,month_done:Habits.monthDone(D)}}return store.get('hf_stats',{})[u]||{streak:0,best:0,month_done:0}},
+  rankStreak(){return this.community().map(u=>[u.username,this.stat(u.username).streak]).sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0]))},
+  boardAll(){const c=Object.fromEntries(this.board());return this.community().map(u=>[u.username,c[u.username]||0]).sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0]))},
+  rel(a,b){const f=this._f().find(x=>(x.a==a&&x.b==b)||(x.a==b&&x.b==a));return !f?'none':f.s=='ok'?'friend':f.a==a?'out':'in'},
+  friendSince(a,b){return(this._f().find(x=>(x.a==a&&x.b==b)||(x.a==b&&x.b==a))||{}).since||0},
   /* ---- profile ---- */
   profile(u){return store.get('hf_profile_'+u,{bio:'',avatar:''})},
   setProfile(u,v){store.set('hf_profile_'+u,v);if(sb)sb.rpc('set_my_profile',{p_bio:v.bio||'',p_avatar:v.avatar||''}).then(r=>r.error&&console.warn(r.error.message))},
   notify(to,type,data){if(sb){const id=this.I[to];if(id)this.w(sb.from('notifications').insert({user_id:id,type,data}));return}
     const N=store.get('hf_notifs',[]);N.push({id:'n'+Date.now()+N.length,to,type,data,read:false,at:Date.now()});store.set('hf_notifs',N)},
   /* ---- reading the server into the cache. Returns true when something changed ---- */
-  async refresh(){if(!sb||!this.me())return false;const K=()=>JSON.stringify([store.get('hf_programs'),store.get('hf_members'),store.get('hf_friends'),store.get('hf_fh')]),before=K(),me=this.me().id;
-    const R=await Promise.all([sb.rpc('community'),sb.from('programs').select('*'),sb.from('program_tasks').select('*').order('position'),sb.from('program_members').select('*'),sb.from('task_progress').select('task_id').eq('user_id',me),sb.from('friendships').select('*')]);
+  async refresh(){if(!sb||!this.me())return false;const K=()=>JSON.stringify([store.get('hf_programs'),store.get('hf_members'),store.get('hf_friends'),store.get('hf_fh'),store.get('hf_stats'),store.get('hf_community')]),before=K(),me=this.me().id;
+    const R=await Promise.all([sb.rpc('community'),sb.from('programs').select('*'),sb.from('program_tasks').select('*').order('position'),sb.from('program_members').select('*'),sb.from('task_progress').select('task_id').eq('user_id',me),sb.from('friendships').select('*'),sb.from('public_stats').select('*')]);
     if(R.some(r=>r.error)){console.warn('Refresh failed:',(R.find(r=>r.error).error||{}).message);return false}
-    const[c,pr,tk,mb,tp,fr]=R.map(r=>r.data||[]);this.N={};this.I={};c.forEach(u=>{this.N[u.id]=u.username;this.I[u.username]=u.id});store.set('hf_community',c);
+    const[c,pr,tk,mb,tp,fr,ps]=R.map(r=>r.data||[]);this.N={};this.I={};c.forEach(u=>{this.N[u.id]=u.username;this.I[u.username]=u.id});store.set('hf_community',c);
     const nm=id=>this.N[id]||'former member',mine=new Set(tp.map(x=>x.task_id));
     const P=pr.sort((a,b)=>String(b.created_at).localeCompare(String(a.created_at))).map(p=>({id:p.id,name:p.name,desc:p.description||'',creator:nm(p.creator),created:Date.parse(p.created_at),tasks:tk.filter(t=>t.program_id==p.id).map(t=>({id:t.id,t:t.title,url:t.url}))}));store.set('hf_programs',P);
     const M={};mb.forEach(m=>{const p=P.find(x=>x.id==m.program_id);if(!p)return;(M[m.program_id]=M[m.program_id]||{})[nm(m.user_id)]={status:m.status,done:m.user_id==me?p.tasks.filter(t=>mine.has(t.id)).map(t=>t.id):[]}});
     P.forEach(p=>{const m=(M[p.id]||{})[this.me().username];if(!m)return;const want=p.tasks.length&&p.tasks.every(t=>m.done.includes(t.id))?'completed':'joined';   // tasks were edited: fix my own status
       if(m.status!=want){m.status=want;this.w(sb.from('program_members').update({status:want}).eq('program_id',p.id).eq('user_id',me))}});
-    store.set('hf_members',M);
+    store.set('hf_members',M);store.set('hf_stats',Object.fromEntries(ps.map(s=>[nm(s.user_id),s])));
     store.set('hf_friends',fr.map(f=>({a:nm(f.requester),b:nm(f.addressee),s:f.status=='accepted'?'ok':'pending',since:f.accepted_at?Date.parse(f.accepted_at):0})));
     if(this.wantFH){const F={};await Promise.all(this.friends(this.me().username).map(async n=>{const r=await sb.rpc('friend_habits',{fid:this.I[n]});F[n]=r.data||null}));store.set('hf_fh',F)}   // friends' habits, already filtered to eye-ON by the database
     return before!==K()},

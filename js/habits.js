@@ -8,10 +8,11 @@ const Habits={
   dow(k){const[y,m,d]=k.split('-');return new Date(y,m-1,d).getDay()},
   load(u){let D=store.get('hf_hab_'+u);if(!D){const t=this.today();
     D={joined:t,log:{},habits:[['Study','📖','2h 30m'],['Workout','🏋','45m'],['Prayer','💜','5 / 5'],['Sleep schedule','🌙','7h 30m'],['Water intake','💧','2.5L'],['Coding / projects','💻','1h 00m'],['No social media','📵','0h']].map((x,i)=>({id:'h'+i,n:x[0],i:x[1],note:x[2],vis:true,created:t}))};this.save(u,D)}return D},
-  save(u,D){store.set('hf_hab_'+u,D);if(u==(Auth.current()||{}).username)Sync.push('habits',D)},   // only ever sync the logged-in user's own data
+  save(u,D){store.set('hf_hab_'+u,D);if(u==(Auth.current()||{}).username){Sync.push('habits',D);const S=this.streak(D);Sync.push('stats',{streak:S.cur,best:S.best,month_done:this.monthDone(D)})}},   // only ever sync the logged-in user's own data
   sched(D,k){return D.habits.filter(h=>h.created<=k)},            // only habits scheduled on that day count
   count(D,k){const s=this.sched(D,k).map(h=>h.id);return(D.log[k]||[]).filter(i=>s.includes(i)).length},
   lvl(p){return p<=0?0:p<=25?1:p<=50?2:3},                       // 0 dark, <=25 dim, <=50 medium, <=100 bright
+  monthDone(D){const T=this.today(),y=+T.slice(0,4),m=T.slice(5,7);let n=0;for(let d=1;d<=+T.slice(8);d++)n+=this.count(D,`${y}-${m}-${String(d).padStart(2,'0')}`);return n},
   streak(D){const L=Object.keys(D.log).filter(k=>D.log[k].length).sort();let best=0,run=0,prev=null;
     for(const k of L){run=prev&&this.add(prev,1)==k?run+1:1;best=Math.max(best,run);prev=k}
     let k=this.today();if(!(D.log[k]||[]).length)k=this.add(k,-1);let cur=0;while((D.log[k]||[]).length){cur++;k=this.add(k,-1)}

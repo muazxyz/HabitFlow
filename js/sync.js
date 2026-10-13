@@ -12,8 +12,10 @@ const Sync={ok:false,dirty:{},tid:null,
   push(k,v){if(!sb||!this.ok)return;this.dirty[k]=v;clearTimeout(this.tid);this.tid=setTimeout(()=>this.flush(),800)},
   settings(){this.push('settings',{...store.get('hf_settings',{theme:'midnight',font:'inter'}),customs:store.get('hf_customs',[]),unlocked:store.get('hf_unlocked',{})})},
   async flush(){clearTimeout(this.tid);const d=this.dirty,u=Auth.current();this.dirty={};if(!sb||!u||!Object.keys(d).length)return;
-    const{error}=await sb.from('user_data').upsert({user_id:u.id,...d,updated_at:new Date().toISOString()});
-    if(error){console.warn('Sync failed:',error.message);this.dirty={...d,...this.dirty}}},   // keep it for the next try
-  clear(){if(!sb)return;Object.keys(localStorage).filter(k=>/^hf_(hab|remark|profile)_|^hf_(settings|customs|unlocked|programs|members|friends|fh|community)$/.test(k)).forEach(k=>localStorage.removeItem(k));this.ok=false}   // logout: leave nothing of this account behind
+    const st=d.stats;delete d.stats;const now=new Date().toISOString();let bad=null;
+    if(st){const r=await sb.from('public_stats').upsert({user_id:u.id,...st,updated_at:now});if(r.error){bad=r.error;this.dirty.stats=st}}
+    if(Object.keys(d).length){const r=await sb.from('user_data').upsert({user_id:u.id,...d,updated_at:now});if(r.error){bad=r.error;Object.assign(this.dirty,d)}}
+    if(bad)console.warn('Sync failed:',bad.message)},   // keep it for the next try
+  clear(){if(!sb)return;Object.keys(localStorage).filter(k=>/^hf_(hab|remark|profile)_|^hf_(settings|customs|unlocked|programs|members|friends|fh|community|stats)$/.test(k)).forEach(k=>localStorage.removeItem(k));this.ok=false}   // logout: leave nothing of this account behind
 };
 document.addEventListener('visibilitychange',()=>{if(document.hidden)Sync.flush()});
