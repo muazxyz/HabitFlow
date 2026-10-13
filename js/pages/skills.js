@@ -15,7 +15,7 @@ Pages.skills={render(el,u){
       <p class="mu pd">${esc(p.desc||'')}</p><div class="mu">Created by <b>${mine?'you':esc(p.creator)}</b> · ${n} member${n==1?'':'s'} · ${p.tasks.length} task${p.tasks.length==1?'':'s'}</div>
       ${m?`<div class="prg"><span>Progress</span><span>${pct(p)}%</span></div><div class="pbar"><i style="width:${pct(p)}%"></i></div>`:''}
       ${!m&&!mine?btns(p):`<button class="resume" data-a="open" data-id="${p.id}">Resume</button>${mine?'':`<div class="prow">${btns(p)}</div>`}`}</div>`};
-  const draw=()=>{const P=Social.progs(),B=Social.board(),st=p=>(Social.mem(p.id)[U]||{}).status,act0=P.filter(p=>st(p)=='joined'),
+  const draw=()=>{const P=Social.progs(),BA=Social.boardAll(),Fr=Social.friends(U),st=p=>(Social.mem(p.id)[U]||{}).status,act0=P.filter(p=>st(p)=='joined'),
       goal=[...act0].sort((a,b)=>pct(b)-pct(a))[0],doneN=P.filter(p=>p.creator!=U&&st(p)=='completed').length,
       L=P.filter(p=>filter=='all'||(filter=='joined'&&st(p)=='joined'&&p.creator!=U)||(filter=='done'&&st(p)=='completed')||(filter=='created'&&p.creator==U));
     App.repaint(el,`<div class="col"><div class="card hero shead"><div><h1>Skill Learning</h1><div class="mu">Create learning programs, join others and track your progress.</div></div>
@@ -24,7 +24,7 @@ Pages.skills={render(el,u){
       <div class="card stat"><div class="sl">Completed</div><div class="sv">${doneN}</div><div class="mu">Programs you completed</div></div>
       <div class="card stat"><div class="sl">Current Progress</div><div class="sv sg">${goal?`${esc(goal.name)}: ${pct(goal)}%`:'None yet'}</div><div class="mu">${goal?'Your top program in progress':'Join a program to get started'}</div></div></div>
      <div class="stats"><div class="card span2"><h3>Courses &amp; Skill Paths</h3><div class="pgrid">${L.length?L.map(card).join(''):'<p class="mu">Nothing here yet. Add a program or change the filter.</p>'}</div></div>
-      <div class="card"><h3>🏆 Leaderboard</h3>${B.length?B.slice(0,10).map(([n,c],i)=>`<div class="fa"><span style="width:24px">${['🥇','🥈','🥉'][i]||i+1}</span><span class="av">${esc(n[0].toUpperCase())}</span><div style="flex:1">${esc(n)}${n==U?' (you)':''}</div><b>${c}</b></div>`).join(''):'<p class="mu">No completed programs yet.</p>'}<div class="mu" style="margin-top:8px">Completed programs</div></div></div></div>`)};
+      <div class="card"><h3>🏆 Leaderboard</h3><div class="lbl">${BA.map(([n,c],i)=>People.row(n,i,c,U,Fr)).join('')}</div><div class="mu" style="margin-top:8px">Completed programs · you and your friends are highlighted · click a name</div></div></div></div>`)};
   /* checkbox popup */
   const detail=()=>{const p=Social.progs().find(x=>x.id==openId);if(!p){box.parentNode.remove();openId=null;return}
     const m=Social.mem(p.id)[U],mine=p.creator==U,y=box.scrollTop;
@@ -62,6 +62,7 @@ Pages.skills={render(el,u){
     if(a=='join')Social.join(id,U);refresh()};
   /* the card itself does nothing; only its buttons act */
   el.onclick=e=>{const b=e.target.closest('[data-a]'),a=b&&b.dataset.a;
+    const ur=e.target.closest('[data-u]');if(ur&&!b){menuId=null;fopen=false;return People.open(ur.dataset.u,refresh)}
     if(a=='menu'){menuId=menuId==b.dataset.id?null:b.dataset.id;fopen=false;return draw()}
     if(a=='fd'){fopen=!fopen;menuId=null;return draw()}
     if(a=='fo'){filter=b.dataset.v;fopen=false;return draw()}
