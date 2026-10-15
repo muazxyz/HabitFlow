@@ -16,7 +16,7 @@ Pages.skills={render(el,u){
       ${m?`<div class="prg"><span>Progress</span><span>${pct(p)}%</span></div><div class="pbar"><i style="width:${pct(p)}%"></i></div>`:''}
       ${!m&&!mine?btns(p):`<button class="resume" data-a="open" data-id="${p.id}">Resume</button>${mine?'':`<div class="prow">${btns(p)}</div>`}`}</div>`};
   const draw=()=>{const P=Social.progs(),BA=Social.boardAll(),Fr=Social.friends(U),st=p=>(Social.mem(p.id)[U]||{}).status,act0=P.filter(p=>st(p)=='joined'),
-      goal=[...act0].sort((a,b)=>pct(b)-pct(a))[0],doneN=P.filter(p=>p.creator!=U&&st(p)=='completed').length,
+      goal=[...act0].sort((a,b)=>pct(b)-pct(a))[0],doneN=P.filter(p=>st(p)=='completed').length   /* own finished programs count here, never on the leaderboard */,
       L=P.filter(p=>filter=='all'||(filter=='joined'&&st(p)=='joined'&&p.creator!=U)||(filter=='done'&&st(p)=='completed')||(filter=='created'&&p.creator==U));
     App.repaint(el,`<div class="col"><div class="card hero shead"><div><h1>Skill Learning</h1><div class="mu">Create learning programs, join others and track your progress.</div></div>
       <div class="sact"><div class="dd"><button class="fsel" data-a="fd">${FL.find(x=>x[0]==filter)[1]} <span>▾</span></button>${fopen?`<div class="dmenu">${FL.map(([v,l])=>`<button class="${v==filter?'on':''}" data-a="fo" data-v="${v}">${l}</button>`).join('')}</div>`:''}</div><button class="btn add" data-a="new">+ Add program</button></div></div>
