@@ -7,7 +7,7 @@ const Sync={ok:false,dirty:{},tid:null,
     if(data){if(data.habits)store.set('hf_hab_'+u.username,data.habits);
       if(data.settings){const{customs,unlocked,...s}=data.settings;store.set('hf_settings',s);store.set('hf_customs',customs||[]);store.set('hf_unlocked',unlocked||{})}
       if('remark' in data)store.set('hf_remark_'+u.username,data.remark)}
-    const p=await Auth._profile(u.id);if(p)store.set('hf_profile_'+u.username,{bio:p.bio||'',avatar:p.avatar_url||''});
+    const p=await Auth._profile(u.id);if(p)store.set('hf_profile_'+u.username,{bio:p.bio||'',avatar:p.avatar_url||'',name:p.display_name||''});
     this.ok=true},
   push(k,v){if(!sb||!this.ok)return;this.dirty[k]=v;clearTimeout(this.tid);this.tid=setTimeout(()=>this.flush(),800)},
   settings(){this.push('settings',{...store.get('hf_settings',{theme:'midnight',font:'inter'}),customs:store.get('hf_customs',[]),unlocked:store.get('hf_unlocked',{})})},

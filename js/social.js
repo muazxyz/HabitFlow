@@ -7,17 +7,18 @@ const Social={
   me(){return Auth.current()},
   w(p){return Promise.resolve(p).then(r=>{if(r&&r.error)throw r.error}).catch(e=>{console.warn('Save failed:',e.message||e);return this.refresh().then(()=>this.hook&&this.hook())})},   // on failure, re-read the server so the screen never lies
   /* ---- community ---- */
-  community(){if(sb)return store.get('hf_community',[]).map(u=>({username:u.username,bio:u.bio||'',avatar:u.avatar_url||'',since:Date.parse(u.created_at)||0}));
-    return Auth._users().filter(u=>u.status=='approved').map(u=>({username:u.username,bio:this.profile(u.username).bio,avatar:this.profile(u.username).avatar,since:u.created||0}))},
-  prof(u){const c=this.community().find(x=>x.username==u)||{since:0},me=this.me();if(me&&u==me.username){const p=this.profile(u);return{bio:p.bio,avatar:p.avatar,since:c.since}}return{bio:'',avatar:'',...c}},
+  community(){if(sb)return store.get('hf_community',[]).map(u=>({username:u.username,name:u.display_name||'',bio:u.bio||'',avatar:u.avatar_url||'',since:Date.parse(u.created_at)||0}));
+    return Auth._users().filter(u=>u.status=='approved').map(u=>({username:u.username,name:this.profile(u.username).name||'',bio:this.profile(u.username).bio,avatar:this.profile(u.username).avatar,since:u.created||0}))},
+  prof(u){const c=this.community().find(x=>x.username==u)||{since:0},me=this.me();if(me&&u==me.username){const p=this.profile(u);return{bio:p.bio,avatar:p.avatar,name:p.name||'',since:c.since}}return{bio:'',avatar:'',name:'',...c}},
+  dname(u){return this.prof(u).name||u},
   stat(u){if(!sb||u==this.me().username){const D=Habits.load(u),S=Habits.streak(D);return{streak:S.cur,best:S.best,month_done:Habits.monthDone(D)}}return store.get('hf_stats',{})[u]||{streak:0,best:0,month_done:0}},
   rankStreak(){return this.community().map(u=>[u.username,this.stat(u.username).streak]).sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0]))},
   boardAll(){const c=Object.fromEntries(this.board());return this.community().map(u=>[u.username,c[u.username]||0]).sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0]))},
   rel(a,b){const f=this._f().find(x=>(x.a==a&&x.b==b)||(x.a==b&&x.b==a));return !f?'none':f.s=='ok'?'friend':f.a==a?'out':'in'},
   friendSince(a,b){return(this._f().find(x=>(x.a==a&&x.b==b)||(x.a==b&&x.b==a))||{}).since||0},
   /* ---- profile ---- */
-  profile(u){return store.get('hf_profile_'+u,{bio:'',avatar:''})},
-  setProfile(u,v){store.set('hf_profile_'+u,v);if(sb)sb.rpc('set_my_profile',{p_bio:v.bio||'',p_avatar:v.avatar||''}).then(r=>r.error&&console.warn(r.error.message))},
+  profile(u){return store.get('hf_profile_'+u,{bio:'',avatar:'',name:''})},
+  setProfile(u,v){store.set('hf_profile_'+u,v);if(sb)sb.rpc('set_my_profile',{p_bio:v.bio||'',p_avatar:v.avatar||'',p_name:v.name||''}).then(r=>r.error&&console.warn(r.error.message))},
   notify(to,type,data){if(sb){const id=this.I[to];if(id)this.w(sb.from('notifications').insert({user_id:id,type,data}));return}
     const N=store.get('hf_notifs',[]);N.push({id:'n'+Date.now()+N.length,to,type,data,read:false,at:Date.now()});store.set('hf_notifs',N)},
   /* ---- reading the server into the cache. Returns true when something changed ---- */
