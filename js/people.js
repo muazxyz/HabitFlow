@@ -33,12 +33,14 @@ const People={
     UI.modal(`<div style="text-align:center">${this.av(n,76)}<h3 style="margin:10px 0 4px">${esc(n)}</h3><div class="mu" style="margin-bottom:14px">${esc(Social.prof(n).bio||'No bio yet.')}</div></div>
       ${rel=='out'?'<button class="btn ghost" disabled>Request sent</button>':`<button class="btn" id="af">${rel=='in'?'Accept friend request':'Add as friend'}</button>`}<div class="err" id="e"></div><button class="btn ghost" id="c">Close</button>`,(m,c)=>{
       m.querySelector('#c').onclick=c;const b=m.querySelector('#af');if(b)b.onclick=async()=>{try{if(rel=='in')Social.respond(n,U,true);else await Social.request(U,n);c();done&&done()}catch(e){m.querySelector('#e').textContent=e.message}}})},
-  /* large friend popup: profile on the left, monthly habit stats + heatmap + graph on the right */
-  async profile(n,done){const U=Social.me().username;let box;UI.modal('<div class="sub">Loading…</div>',m=>{box=m;m.classList.add('xxl')});
-    const D=await this.dataOf(n),T=Habits.today(),y=+T.slice(0,4),mo=+T.slice(5,7),S=this.month(D,y,mo),p=Social.prof(n),vis=S.per.filter(h=>h.vis!==false),S1=Habits.streak(D);
-    if(!box.isConnected)return;
-    box.innerHTML=`<div class="pp"><div class="sub pl">${this.av(n,92)}<div><h2>${esc(Social.dname(n))}</h2><div class="mu">@${esc(n)}</div></div>${p.bio?`<p class="bio">${esc(p.bio)}</p>`:''}<div class="mu">Member since<br><b>${this.fmt(p.since)}</b></div><div class="mu">Friends since<br><b>${this.fmt(Social.friendSince(U,n))}</b></div><div class="mu">🔥 ${S1.cur} day streak · best ${S1.best}</div><button class="sm bad wide" id="rm" style="margin-top:auto">Remove friend</button></div>
-      <div class="rt"><div class="sub"><h4>Habit stats · ${UI.MONTHS[mo-1]}</h4>${vis.length?vis.map(h=>`<div class="hs"><span>${h.i} ${esc(h.n)}</span><div class="pbar"><i style="width:${S.days?Math.round(h.c/S.days*100):0}%"></i></div><b>${h.c}/${S.days}</b></div>`).join(''):'<p class="mu">No shared habits.</p>'}</div>
-       <div class="bt"><div class="sub"><h4>Heatmap</h4>${this.grid(D,y,mo)}</div><div class="sub gsub"><h4>This week</h4>${this.bars(this.week(D))}</div></div></div></div>`;
-    box.querySelector('#rm').onclick=()=>{box.parentNode.click();UI.confirm(`Remove ${esc(n)} from friends?`,'Remove',()=>{Social.remove(U,n);done&&done()})}}
+  /* large friend popup: renders at full size on the very first frame (cached data), so the open animation is smooth; fresh data swaps in quietly */
+  profile(n,done){const U=Social.me().username;let box;
+    const html=D=>{const T=Habits.today(),y=+T.slice(0,4),mo=+T.slice(5,7),S=this.month(D,y,mo),p=Social.prof(n),vis=S.per.filter(h=>h.vis!==false),S1=Habits.streak(D);
+      return `<div class="pp"><div class="sub pl">${this.av(n,92)}<div><h2>${esc(Social.dname(n))}</h2><div class="mu">@${esc(n)}</div></div>${p.bio?`<p class="bio">${esc(p.bio)}</p>`:''}<div class="mu">Member since<br><b>${this.fmt(p.since)}</b></div><div class="mu">Friends since<br><b>${this.fmt(Social.friendSince(U,n))}</b></div><div class="mu">🔥 ${S1.cur} day streak · best ${S1.best}</div><button class="sm bad wide" id="rm" style="margin-top:auto">Remove friend</button></div>
+      <div class="rt"><div class="sub"><h4>Habit stats · ${UI.MONTHS[mo-1]}</h4>${vis.length?vis.map(h=>`<div class="hs"><span>${UI.hicon(h.i,16)} ${esc(h.n)}</span><div class="pbar"><i style="width:${S.days?Math.round(h.c/S.days*100):0}%"></i></div><b>${h.c}/${S.days}</b></div>`).join(''):'<p class="mu">No shared habits.</p>'}</div>
+       <div class="bt"><div class="sub"><h4>Heatmap</h4>${this.grid(D,y,mo)}</div><div class="sub gsub"><h4>This week</h4>${this.bars(this.week(D))}</div></div></div></div>`};
+    const wire=()=>{box.querySelector('#rm').onclick=()=>{box.parentNode.click();UI.confirm(`Remove ${esc(n)} from friends?`,'Remove',()=>{Social.remove(U,n);done&&done()})}};
+    const D0=(n==U||!sb)?Habits.load(n):Social.fhOf(n);
+    UI.modal(html(D0||{habits:[],log:{},joined:Habits.today()}),m=>{box=m;m.classList.add('xxl');wire()});
+    if(sb&&n!=U)this.dataOf(n).then(D=>{if(box.isConnected&&JSON.stringify(D)!==JSON.stringify(D0)){box.innerHTML=html(D);wire()}})}
 };

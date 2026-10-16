@@ -8,15 +8,15 @@ const App={
   start(){const u=Auth.current();if(!u)return AuthUI.show();
     $('#auth').hidden=true;$('#app').hidden=false;$('#pname').textContent=u.username;this.refreshAvatar();$('.logo').innerHTML=LOGO+'<span>HabitFlow</span>';$('#gear').innerHTML=IC.gear;$('#gear').onclick=()=>{const cur=location.hash.slice(1)||'home';location.hash=cur=='settings'?(App.prev||'home'):'settings'};   // gear again = back to where you were
     const ab=$('#adminbtn');ab.hidden=u.role!='admin';ab.innerHTML=IC.shield;ab.onclick=()=>AdminUI.open();
-    $('#nav').innerHTML=[...CONFIG.NAV.filter(n=>n[0]!='admin'),['notifs','Notifications','🔔']].map(([id,l,i])=>`<button data-p="${id}"><b>${i}</b><span>${{friends:'Social'}[id]||l}</span></button>`).join('');
+    $('#nav').innerHTML=[...CONFIG.NAV.filter(n=>n[0]!='admin'),['notifs','Notifications','']].map(([id,l,i])=>`<button data-p="${id}"><b>${IC.nav[id]||i}</b><span>${{friends:'Social'}[id]||l}</span></button>`).join('');
     $('#nav').onclick=e=>{const b=e.target.closest('button');if(b)location.hash=b.dataset.p};
-    const go=()=>{this.applyTheme();this.refreshAvatar();this.route();Notifs.badge();Notifs.subscribe()};
+    const go=()=>{this.applyTheme();this.refreshAvatar();this.route();Notifs.badge();Notifs.subscribe();if(sb)Social.refresh()};   // warm the Social / Skill Learning cache so those pages open instantly
     if(sb&&!Sync.ok){$('#view').innerHTML='<div class="card mu">Loading your data…</div>';Sync.pull(u).finally(go)}else go()},
   /* RULE FOR ALL PAGES: re-draw with App.repaint(el, html) - never el.innerHTML= inside a redraw.
      First paint after navigating plays the entrance animation; later repaints are silent and keep scroll position. */
   repaint(el,html){const v=$('#view');if(v.dataset.fresh)delete v.dataset.fresh;else v.classList.add('still');const y=v.scrollTop;el.innerHTML=html;v.scrollTop=y},
   badge(n){const b=$('#nav [data-p=notifs]');if(!b)return;let e=b.querySelector('.nb');if(!n){e&&e.remove();return}if(!e){e=document.createElement('em');e.className='nb';b.appendChild(e)}e.textContent=n>9?'9+':n},
-  async route(){const id=location.hash.slice(1)||'home',u=Auth.current();if(!u)return;
+  async route(){const id=location.hash.slice(1)||'home',u=Auth.current();if(!u)return;this.tok=(this.tok||0)+1;clearInterval(window.__clk);   // tok: pages ignore late async results once you have left them
     Auth.verify().then(ok=>{if(!ok&&Auth.current())Auth.logout().then(()=>AuthUI.show('login'))});   // runs in the background, never blocks the page
     if(id!='settings')this.prev=id;$('#gear').classList.toggle('on',id=='settings');
     document.querySelectorAll('#nav button').forEach(b=>b.classList.toggle('on',b.dataset.p==id));
