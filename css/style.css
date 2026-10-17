@@ -236,3 +236,4 @@ input:-webkit-autofill,input:-webkit-autofill:hover,input:-webkit-autofill:focus
 .habit .hi{display:grid;place-items:center;width:24px;color:var(--mu);transition:color .2s}.habit.done .hi{color:var(--a1)}.habit .hi svg{display:block}
 .icons button{display:grid;place-items:center;color:var(--mu)}.icons button.on{color:var(--a1)}.hs>span{display:flex;align-items:center;gap:6px}
 .mod{will-change:transform,opacity}.mod.xxl{-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
+.pc .pend{margin-top:auto;padding-top:8px;font-size:13px}.pc .sm.wide{margin-top:auto}
