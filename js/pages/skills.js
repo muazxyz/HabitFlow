@@ -14,13 +14,13 @@ Pages.skills={render(el,u){
     if(!m)return `<button class="joinb" data-a="join" data-id="${p.id}">Join</button>`;
     return `${m.status=='completed'?'<span class="badge approved">Completed ✓</span>':'<button class="joinb on" disabled>Joined</button>'}<button class="sm bad" data-a="leave" data-id="${p.id}">Give up</button>`};
   const card=p=>{const m=Social.mem(p.id)[U],n=nm(p),mine=p.creator==U,r=Social.ratingOf(p.id,U);
-    const foot=mine?(p.status=='rejected'?`<div class="two"><button class="sm bad" data-a="del" data-id="${p.id}">Delete</button><button class="resume" data-a="open" data-id="${p.id}">Resume</button></div>`:`<button class="resume" data-a="open" data-id="${p.id}">Resume</button>`)
+    const foot=mine?(p.status=='pending'?'<div class="mu pend">Waiting for an admin to review it. You can keep editing.</div>':p.status=='rejected'?`<button class="sm bad wide" data-a="del" data-id="${p.id}">Delete</button>`:`<button class="resume" data-a="open" data-id="${p.id}">Resume</button>`)
       :!m?btns(p):`<button class="resume" data-a="open" data-id="${p.id}">Resume</button><div class="prow">${btns(p)}</div>`;
     return `<div class="pc"><div class="ph"><b>${esc(p.name)}</b>${mine?`<button class="kebab" data-a="menu" data-id="${p.id}" title="Settings">⋯</button>`:''}
       ${menuId==p.id?`<div class="pmenu"><button data-a="edit" data-id="${p.id}">⚙ Creator controls</button>${p.status=='delete_requested'?'<button disabled>Deletion requested</button>':`<button class="bad" data-a="del" data-id="${p.id}">🗑 Delete</button>`}</div>`:''}</div>
       ${tag(p)}<p class="mu pd">${esc(p.desc||'')}</p>${p.status=='rejected'?`<div class="rej">${p.reject?esc(p.reject):'Rejected by an admin.'}</div>`:''}
       <div class="mu">Created by <b>${mine?'you':esc(p.creator)}</b> · ${n} member${n==1?'':'s'} · ${p.tasks.length} task${p.tasks.length==1?'':'s'}${r.n?` · ★ ${r.avg.toFixed(1)}`:''}</div>
-      ${m?`<div class="prg"><span>Progress</span><span>${pct(p)}%</span></div><div class="pbar"><i style="width:${pct(p)}%"></i></div>`:''}${foot}</div>`};
+      ${m&&live(p)?`<div class="prg"><span>Progress</span><span>${pct(p)}%</span></div><div class="pbar"><i style="width:${pct(p)}%"></i></div>`:''}${foot}</div>`};
   const draw=()=>{const P=Social.progs().filter(p=>live(p)||p.creator==U),BA=Social.boardAll(),Fr=Social.friends(U),st=p=>(Social.mem(p.id)[U]||{}).status,act0=P.filter(p=>st(p)=='joined'),
       goal=[...act0].sort((a,b)=>pct(b)-pct(a))[0],doneN=P.filter(p=>st(p)=='completed').length,   /* finishing your own program counts */
       L=P.filter(p=>filter=='all'||(filter=='joined'&&st(p)=='joined'&&p.creator!=U)||(filter=='done'&&st(p)=='completed')||(filter=='created'&&p.creator==U));
@@ -69,7 +69,7 @@ Pages.skills={render(el,u){
       o.onclick=()=>{const reason=rs.value.trim();c();setTimeout(()=>typeDel(p,'Your request goes to an admin.',()=>{Social.requestDelete(p.id,reason);refresh();
         UI.modal('<h3>Request sent</h3><p style="margin:8px 0 14px">Your program will be deleted once an admin approves it.</p><button class="btn" id="k">OK</button>',(m2,c2)=>m2.querySelector('#k').onclick=c2)}),230)}})};
   const act=(a,id,v)=>{const p=id&&Social.progs().find(x=>x.id==id);
-    if(a=='open')return open(id);if(a=='new')return form();if(a=='edit')return form(p);if(a=='del')return delFlow(p);
+    if(a=='open'){if(p&&!live(p))return;return open(id)}if(a=='new')return form();if(a=='edit')return form(p);if(a=='del')return delFlow(p);
     if(a=='rate'){Social.rate(id,U,+v);return refresh()}
     if(a=='leave')return UI.confirm('Give up this program? Your progress will be lost.','Give up',()=>{Social.leave(id,U);refresh()});
     if(a=='join')Social.join(id,U);refresh()};

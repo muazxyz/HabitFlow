@@ -9,7 +9,7 @@ const Notifs={hook:null,sub:false,
   async markAll(){const u=Auth.current();if(sb){await sb.from('notifications').update({read:true}).eq('user_id',u.id).eq('read',false)}else store.set('hf_notifs',store.get('hf_notifs',[]).map(n=>n.to==u.username?{...n,read:true}:n))},
   async clear(){const u=Auth.current();if(sb){await sb.from('notifications').delete().eq('user_id',u.id)}else store.set('hf_notifs',store.get('hf_notifs',[]).filter(n=>n.to!=u.username))},
   async badge(){const L=await this.list();App.badge(L.filter(n=>!n.read).length)},
-  changed(){this.badge();this.hook&&this.hook()},
+  changed(){this.badge();this.hook&&this.hook();if(sb)Social.refresh().then(ch=>ch&&Social.hook&&Social.hook())},   // new activity: also refresh programs/friends
   subscribe(){const u=Auth.current();if(!sb||this.sub||!u)return;this.sub=true;try{sb.channel('notifs-'+u.id).on('postgres_changes',{event:'*',schema:'public',table:'notifications',filter:`user_id=eq.${u.id}`},()=>this.changed()).subscribe()}catch(e){console.warn('Realtime unavailable, using polling:',e.message)}}
 };
 window.Pages=window.Pages||{};
